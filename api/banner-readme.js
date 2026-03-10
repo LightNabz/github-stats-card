@@ -118,7 +118,7 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
   // Stat grid bottom = GRID_Y(118) + row1(54) + gap(8) + row2(54) = 234
   // Graph starts 14px below that
   const GRAPH_Y     = 248;
-  const GC_COLS     = 26;   // weeks
+  const GC_COLS     = 52;   // weeks (fills full card width)
   const GC_ROWS     = 7;    // days
   const GC_PAD      = 14;   // side padding
   const GC_GAP      = 2;    // gap between cells
@@ -128,7 +128,7 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
   const GC_OFFSET_X = GC_PAD;
   const GC_OFFSET_Y = GRAPH_Y;
 
-  // flatten days, take last 26*7 = 182 days
+  // flatten days, take last 52*7 = 364 days (full year)
   const allDays = (contributionWeeks || [])
     .flatMap(w => w.contributionDays)
     .slice(-GC_COLS * GC_ROWS);
