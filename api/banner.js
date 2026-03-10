@@ -11,41 +11,7 @@ import { escapeXml } from "../lib/theme.js";
 function chibiPlaceholder(x, flipX = false) {
   const transform = flipX ? `translate(${x + 36}, 0) scale(-1,1)` : `translate(${x}, 0)`;
   return `
-    <g transform="${transform}" opacity="0.85">
-      <!-- halo -->
-      <ellipse cx="18" cy="5" rx="9" ry="2.5" stroke="#ffd166" stroke-width="1.5" fill="rgba(255,209,102,0.12)"/>
-      <!-- hair -->
-      <rect x="10" y="10" width="16" height="17" rx="3" fill="#5b8dee"/>
-      <rect x="7" y="13" width="4" height="11" rx="2" fill="#5b8dee"/>
-      <rect x="25" y="13" width="4" height="11" rx="2" fill="#5b8dee"/>
-      <!-- face -->
-      <ellipse cx="18" cy="16" rx="8" ry="8" fill="#ffe0c8"/>
-      <!-- eyes -->
-      <ellipse cx="15" cy="16" rx="1.8" ry="2" fill="#1a3a6e"/>
-      <ellipse cx="21" cy="16" rx="1.8" ry="2" fill="#1a3a6e"/>
-      <circle cx="15.6" cy="15.3" r="0.7" fill="white"/>
-      <circle cx="21.6" cy="15.3" r="0.7" fill="white"/>
-      <!-- blush -->
-      <ellipse cx="13" cy="18.5" rx="2" ry="1" fill="#ffb3c6" opacity="0.6"/>
-      <ellipse cx="23" cy="18.5" rx="2" ry="1" fill="#ffb3c6" opacity="0.6"/>
-      <!-- mouth -->
-      <path d="M15.5 20.5 Q18 22.5 20.5 20.5" stroke="#c97b7b" stroke-width="1" fill="none" stroke-linecap="round"/>
-      <!-- uniform body -->
-      <rect x="12" y="23" width="12" height="13" rx="3" fill="#4a9eff"/>
-      <polygon points="16,23 20,23 18,27" fill="white" opacity="0.9"/>
-      <!-- skirt -->
-      <rect x="11" y="34" width="14" height="7" rx="2" fill="#1a3a6e"/>
-      <!-- legs -->
-      <rect x="13" y="40" width="4" height="8" rx="2" fill="#ffe0c8"/>
-      <rect x="19" y="40" width="4" height="8" rx="2" fill="#ffe0c8"/>
-      <!-- shoes -->
-      <rect x="12" y="46" width="5" height="3" rx="1.5" fill="#1a3a6e"/>
-      <rect x="19" y="46" width="5" height="3" rx="1.5" fill="#1a3a6e"/>
-      <!-- bob animation -->
-      <animateTransform attributeName="transform" type="translate"
-        values="${flipX ? x+36 : x},0; ${flipX ? x+36 : x},-3; ${flipX ? x+36 : x},0"
-        dur="0.6s" repeatCount="indefinite" additive="replace"/>
-    </g>
+    <image href="https://avatars.githubusercontent.com/u/87846302?s=64&v=4" width="48" height="64" transform="${transform}"/>
   `;
 }
 
