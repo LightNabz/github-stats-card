@@ -50,7 +50,7 @@ function chibiPlaceholder(x, flipX = false) {
 }
 
 function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang, topLangColor, totalContributions, contributionWeeks, theme, avatarBase64, ocBase64 }) {
-  const W = 520, H = 320;
+  const W = 520, H = 338;  // extra height for graph zone
   const t = getTheme(theme);
 
   // BA accent colors stay fixed — they're the banner identity
@@ -115,18 +115,18 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
 
   // ── Contribution graph squares ──
   // Layout: fill full card width, last 26 weeks × 7 days
-  const GRAPH_Y     = 242;   // top of graph area
-  const GRAPH_H     = 72;    // total height of graph+chibi zone
-  const GC_COLS     = 26;    // weeks to show
-  const GC_ROWS     = 7;     // days per week
-  const GC_PAD      = 14;    // left+right padding inside card
-  // derive cell+gap size so graph fills full card width
-  const GC_GAP      = 2;
+  // Stat grid bottom = GRID_Y(118) + row1(54) + gap(8) + row2(54) = 234
+  // Graph starts 14px below that
+  const GRAPH_Y     = 248;
+  const GC_COLS     = 26;   // weeks
+  const GC_ROWS     = 7;    // days
+  const GC_PAD      = 14;   // side padding
+  const GC_GAP      = 2;    // gap between cells
+  // cell size: fill full width
   const GC_CELL     = Math.floor((W - GC_PAD * 2 - GC_GAP * (GC_COLS - 1)) / GC_COLS);
-  const GC_TOTAL_W  = GC_COLS * (GC_CELL + GC_GAP) - GC_GAP;
-  const GC_OFFSET_X = GC_PAD;
   const GC_ROW_H    = GC_ROWS * (GC_CELL + GC_GAP) - GC_GAP;
-  const GC_OFFSET_Y = GRAPH_Y + Math.floor((GRAPH_H - GC_ROW_H) / 2) - 2;
+  const GC_OFFSET_X = GC_PAD;
+  const GC_OFFSET_Y = GRAPH_Y;
 
   // flatten days, take last 26*7 = 182 days
   const allDays = (contributionWeeks || [])
@@ -337,7 +337,7 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
     ${statCells}
 
     <!-- graph stage bg -->
-    <rect x="0" y="242" width="${W}" height="74" fill="url(#stageGrad)"/>
+    <rect x="0" y="${GRAPH_Y}" width="${W}" height="${H - GRAPH_Y}" fill="url(#stageGrad)"/>
 
     <!-- contribution graph cells (behind chibi) -->
     ${graphCells}
