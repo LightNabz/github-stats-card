@@ -11,7 +11,7 @@ import { escapeXml, getTheme, parseParams } from "../lib/theme.js";
 function chibiPlaceholder(x, flipX = false) {
   const transform = flipX ? `translate(${x + 36}, 0) scale(-1,1)` : `translate(${x}, 0)`;
   return `
-    <image href="https://i0.wp.com/walfiegif.wordpress.com/wp-content/uploads/2023/07/out-transparent-132.gif" width="48" height="64" transform="${transform}"/>
+    <image href="https://raw.githubusercontent.com/LightNabz/github-stats-card/main/public/shork.gif" width="48" height="64" transform="${transform}"/>
   `;
 }
 
