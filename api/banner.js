@@ -173,20 +173,34 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
     <rect x="0" y="0" width="${W}" height="4" fill="url(#barGrad)"/>
 
     <!-- header section -->
-    <!-- halo icon -->
-    <ellipse cx="36" cy="42" rx="11" ry="3" stroke="${accentYellow}" stroke-width="1.5" fill="rgba(255,209,102,0.12)"/>
-    <line x1="36" y1="42" x2="36" y2="58" stroke="${accentBlue}" stroke-width="1.2"
-      stroke-dasharray="2 2" opacity="0.5"/>
-    <circle cx="36" cy="58" r="3" fill="${accentBlue}" opacity="0.8"/>
-    <circle cx="36" cy="42" r="2" fill="${accentYellow}"/>
+    <!-- avatar (rounded) -->
+    <defs>
+      <clipPath id="avatarClip">
+        <circle cx="36" cy="42" r="22"/>
+      </clipPath>
+    </defs>
+    <!-- avatar border ring with BA glow -->
+    <circle cx="36" cy="42" r="23.5" fill="none" stroke="url(#barGrad)" stroke-width="1.5" opacity="0.8"/>
+    <circle cx="36" cy="42" r="23.5" fill="none" stroke="${accentBlue}" stroke-width="1" opacity="0.4">
+      <animate attributeName="opacity" values="0.2;0.7;0.2" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <!-- profile picture -->
+    <image
+      href="https://github.com/${login}.png"
+      x="14" y="20" width="44" height="44"
+      clip-path="url(#avatarClip)"
+      preserveAspectRatio="xMidYMid slice"
+    />
+    <!-- tiny halo on top of avatar -->
+    <ellipse cx="36" cy="20" rx="10" ry="2.5" stroke="${accentYellow}" stroke-width="1.2" fill="rgba(255,209,102,0.15)"/>
 
     <!-- title -->
-    <text x="56" y="40" fill="${navy}"
+    <text x="68" y="36" fill="${navy}"
       font-size="17" font-weight="700" letter-spacing="0.5"
       font-family="'Rajdhani',sans-serif">${escapeXml(name)}'s GitHub Stats</text>
-    <text x="56" y="56" fill="${muted}"
+    <text x="68" y="52" fill="${muted}"
       font-size="10" letter-spacing="1.2"
-      font-family="'Rajdhani',sans-serif">ATLANTIS · ${escapeXml(login.toUpperCase())}</text>
+      font-family="'Rajdhani',sans-serif">Nab HomeLab · ${escapeXml(login.toUpperCase())}</text>>
 
     <!-- underline accent -->
     <line x1="56" y1="62" x2="120" y2="62" stroke="${accentBlue}" stroke-width="2" stroke-linecap="round"/>
