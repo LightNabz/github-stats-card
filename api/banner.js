@@ -101,14 +101,14 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
         dur="13s" repeatCount="indefinite" begin="0s"/>
     </g>
   `;
-  const chibi2 = `
-    <g>
-      ${chibiPlaceholder(0, true)}
-      <animateTransform attributeName="transform" type="translate"
-        values="${W + 50},${chibiStageY}; -50,${chibiStageY}"
-        dur="16s" repeatCount="indefinite" begin="4s"/>
-    </g>
-  `;
+  // const chibi2 = `
+  //   <g>
+  //    ${chibiPlaceholder(0, true)}
+  //     <animateTransform attributeName="transform" type="translate"
+  //       values="${W + 50},${chibiStageY}; -50,${chibiStageY}"
+  //       dur="16s" repeatCount="indefinite" begin="4s"/>
+  //   </g>
+  // `;
 
   // border glow pulse
   const borderGlow = `
