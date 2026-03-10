@@ -11,11 +11,45 @@ import { escapeXml, getTheme, parseParams } from "../lib/theme.js";
 function chibiPlaceholder(x, flipX = false) {
   const transform = flipX ? `translate(${x + 36}, 0) scale(-1,1)` : `translate(${x}, 0)`;
   return `
-    <image href="https://raw.githubusercontent.com/LightNabz/github-stats-card/main/public/shork.gif" width="48" height="64" transform="${transform}"/>
+    <g transform="${transform}" opacity="0.85">
+      <!-- halo -->
+      <ellipse cx="18" cy="5" rx="9" ry="2.5" stroke="#ffd166" stroke-width="1.5" fill="rgba(255,209,102,0.12)"/>
+      <!-- hair -->
+      <rect x="10" y="10" width="16" height="17" rx="3" fill="#5b8dee"/>
+      <rect x="7" y="13" width="4" height="11" rx="2" fill="#5b8dee"/>
+      <rect x="25" y="13" width="4" height="11" rx="2" fill="#5b8dee"/>
+      <!-- face -->
+      <ellipse cx="18" cy="16" rx="8" ry="8" fill="#ffe0c8"/>
+      <!-- eyes -->
+      <ellipse cx="15" cy="16" rx="1.8" ry="2" fill="#1a3a6e"/>
+      <ellipse cx="21" cy="16" rx="1.8" ry="2" fill="#1a3a6e"/>
+      <circle cx="15.6" cy="15.3" r="0.7" fill="white"/>
+      <circle cx="21.6" cy="15.3" r="0.7" fill="white"/>
+      <!-- blush -->
+      <ellipse cx="13" cy="18.5" rx="2" ry="1" fill="#ffb3c6" opacity="0.6"/>
+      <ellipse cx="23" cy="18.5" rx="2" ry="1" fill="#ffb3c6" opacity="0.6"/>
+      <!-- mouth -->
+      <path d="M15.5 20.5 Q18 22.5 20.5 20.5" stroke="#c97b7b" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <!-- uniform body -->
+      <rect x="12" y="23" width="12" height="13" rx="3" fill="#4a9eff"/>
+      <polygon points="16,23 20,23 18,27" fill="white" opacity="0.9"/>
+      <!-- skirt -->
+      <rect x="11" y="34" width="14" height="7" rx="2" fill="#1a3a6e"/>
+      <!-- legs -->
+      <rect x="13" y="40" width="4" height="8" rx="2" fill="#ffe0c8"/>
+      <rect x="19" y="40" width="4" height="8" rx="2" fill="#ffe0c8"/>
+      <!-- shoes -->
+      <rect x="12" y="46" width="5" height="3" rx="1.5" fill="#1a3a6e"/>
+      <rect x="19" y="46" width="5" height="3" rx="1.5" fill="#1a3a6e"/>
+      <!-- bob animation -->
+      <animateTransform attributeName="transform" type="translate"
+        values="${flipX ? x+36 : x},0; ${flipX ? x+36 : x},-3; ${flipX ? x+36 : x},0"
+        dur="0.6s" repeatCount="indefinite" additive="replace"/>
+    </g>
   `;
 }
 
-function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang, topLangColor, totalContributions, theme, avatarBase64, ocBase64 }) {
+function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang, topLangColor, totalContributions, contributionWeeks, theme, avatarBase64, ocBase64 }) {
   const W = 520, H = 320;
   const t = getTheme(theme);
 
@@ -79,64 +113,99 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
     </rect>
   `;
 
-  // floating particles with SMIL float
-  const particles = [
-    { x: 55,  y: 258, r: 3,   color: accentBlue,   dur: "3.2s", delay: "0s"   },
-    { x: 130, y: 262, r: 2.5, color: accentPink,   dur: "4.1s", delay: "0.8s" },
-    { x: 240, y: 255, r: 3.5, color: accentYellow, dur: "3.7s", delay: "1.5s" },
-    { x: 330, y: 260, r: 2.5, color: accentBlue,   dur: "4.5s", delay: "0.3s" },
-    { x: 420, y: 257, r: 3,   color: accentPink,   dur: "3.0s", delay: "2.0s" },
-    { x: 480, y: 253, r: 2,   color: accentYellow, dur: "5.0s", delay: "1.2s" },
-    { x: 290, y: 248, r: 2.5, color: accentBlue,   dur: "3.5s", delay: "2.5s" },
-  ].map((p, i) => `
-    <circle cx="${p.x}" cy="${p.y}" r="${p.r}" fill="${p.color}" opacity="0.8">
-      <animate attributeName="cy"
-        values="${p.y};${p.y - 18};${p.y}"
-        dur="${p.dur}" repeatCount="indefinite" begin="${p.delay}"
-        calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-      <animate attributeName="opacity"
-        values="0.5;1;0.5"
-        dur="${p.dur}" repeatCount="indefinite" begin="${p.delay}"/>
-    </circle>
-  `).join("");
+  // ── Contribution graph squares ──
+  // Layout: fill full card width, last 26 weeks × 7 days
+  const GRAPH_Y     = 242;   // top of graph area
+  const GRAPH_H     = 70;    // total height of graph+chibi zone
+  const GC_CELL      = 7;     // graph cell size
+  const GC_GAP       = 2;     // graph cell gap
+  const GC_COLS      = 26;    // weeks to show
+  const GC_ROWS      = 7;     // days per week
+  const GC_TOTAL_W   = GC_COLS * (GC_CELL + GC_GAP) - GC_GAP;
+  const GC_OFFSET_X  = Math.floor((W - GC_TOTAL_W) / 2);
+  const GC_ROW_H     = GC_ROWS * (GC_CELL + GC_GAP) - GC_GAP;
+  const GC_OFFSET_Y  = GRAPH_Y + Math.floor((GRAPH_H - GC_ROW_H) / 2) - 4;
 
-  // chibi walk animations — from off-left to off-right
-  const chibiStageY = 248;
+  // flatten days, take last 26*7 = 182 days
+  const allDays = (contributionWeeks || [])
+    .flatMap(w => w.contributionDays)
+    .slice(-GC_COLS * GC_ROWS);
+  const maxCount = Math.max(...allDays.map(d => d.contributionCount), 1);
+
+  let graphCells = "";
+  for (let col = 0; col < GC_COLS; col++) {
+    for (let row = 0; row < GC_ROWS; row++) {
+      const idx = col * ROWS + row;
+      const day = allDays[idx];
+      const count = day ? day.contributionCount : 0;
+      const intensity = count / maxCount;
+      const cellX = GC_OFFSET_X + col * (GC_CELL + GC_GAP);
+      const cellY = GC_OFFSET_Y + row * (GC_CELL + GC_GAP);
+
+      // color levels
+      let fillColor, fillOpacity;
+      if (count === 0) {
+        fillColor = accentBlue;
+        fillOpacity = isDark ? "0.08" : "0.1";
+      } else if (intensity < 0.25) {
+        fillColor = accentBlue; fillOpacity = "0.3";
+      } else if (intensity < 0.5) {
+        fillColor = accentBlue; fillOpacity = "0.55";
+      } else if (intensity < 0.75) {
+        fillColor = accentBlue; fillOpacity = "0.8";
+      } else {
+        fillColor = accentBlue; fillOpacity = "1";
+      }
+
+      // cells with a subtle glow on high-activity ones
+      const glow = intensity > 0.75
+        ? `filter="url(#cellGlow)"`
+        : "";
+
+      graphCells += `<rect x="${cellX}" y="${cellY}" width="${GC_CELL}" height="${GC_CELL}" rx="1.5"
+        fill="${fillColor}" opacity="${fillOpacity}" ${glow}/>`;
+    }
+  }
+
+  // chibi walks in FRONT of the graph (rendered after = on top)
+  // ground line = bottom of graph cells
+  const chibiGroundY = GC_OFFSET_Y + GC_ROW_H;
   const chibiH = 52;
+  const chibiY = chibiGroundY - chibiH + 4; // feet sit on ground line
 
-  // If OC image provided as base64, use it; otherwise show placeholder
-  const chibiContent = ocBase64
-    ? `<image href="${ocBase64}" width="52" height="64" x="0" y="-64" preserveAspectRatio="xMidYMid meet"/>`
-    : chibiPlaceholder(0).replace(/<animateTransform[^/]*\/>/g, ""); // strip inner bob, outer anim handles movement
+  const chibiImg = ocBase64
+    ? (flipX = false) => `<image href="${ocBase64}" width="44" height="${chibiH}" y="${chibiY}" preserveAspectRatio="xMidYMax meet"/>`
+    : null;
 
-  const chibi1 = `
-    <g>
-      ${ocBase64 ? `<image href="${ocBase64}" width="52" height="64" x="-26" y="${chibiStageY - 64}" preserveAspectRatio="xMidYMid meet">
-        <animateTransform attributeName="transform" type="translate"
-          values="-78,0; ${W + 78},0"
-          dur="13s" repeatCount="indefinite" begin="0s"/>
-      </image>` : `<g>
-        ${chibiPlaceholder(0)}
-        <animateTransform attributeName="transform" type="translate"
-          values="-50,${chibiStageY}; ${W + 50},${chibiStageY}"
-          dur="13s" repeatCount="indefinite" begin="0s"/>
-      </g>`}
-    </g>
-  `;
-  const chibi2 = `
-    <g>
-      ${ocBase64 ? `<image href="${ocBase64}" width="52" height="64" x="-26" y="${chibiStageY - 64}" style="transform:scaleX(-1)" preserveAspectRatio="xMidYMid meet">
-        <animateTransform attributeName="transform" type="translate"
-          values="${W + 78},0; -78,0"
-          dur="16s" repeatCount="indefinite" begin="4s"/>
-      </image>` : `<g>
-        ${chibiPlaceholder(0, true)}
-        <animateTransform attributeName="transform" type="translate"
-          values="${W + 50},${chibiStageY}; -50,${chibiStageY}"
-          dur="16s" repeatCount="indefinite" begin="4s"/>
-      </g>`}
-    </g>
-  `;
+  const chibi1 = ocBase64 ? `
+    <image href="${ocBase64}" width="44" height="${chibiH}"
+      y="${chibiY}" preserveAspectRatio="xMidYMax meet">
+      <animate attributeName="x"
+        values="-50; ${W + 50}"
+        dur="13s" repeatCount="indefinite" begin="0s"
+        calcMode="linear"/>
+    </image>` : `<g>
+      <animateTransform attributeName="transform" type="translate"
+        values="-50,${chibiY}; ${W + 50},${chibiY}"
+        dur="13s" repeatCount="indefinite" begin="0s"/>
+      ${chibiPlaceholder(0)}
+    </g>`;
+
+  const chibi2 = ocBase64 ? `
+    <g transform="scale(-1,1) translate(-${W},0)">
+      <image href="${ocBase64}" width="44" height="${chibiH}"
+        y="${chibiY}" preserveAspectRatio="xMidYMax meet">
+        <animate attributeName="x"
+          values="-50; ${W + 50}"
+          dur="17s" repeatCount="indefinite" begin="5s"
+          calcMode="linear"/>
+      </image>
+    </g>` : `<g>
+      <animateTransform attributeName="transform" type="translate"
+        values="${W + 50},${chibiY}; -50,${chibiY}"
+        dur="17s" repeatCount="indefinite" begin="5s"/>
+      ${chibiPlaceholder(0, true)}
+    </g>`;
 
   // border glow pulse
   const borderGlow = `
@@ -188,6 +257,12 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
       <stop offset="100%" stop-color="${t.accentSoft}" stop-opacity="0"/>
     </linearGradient>
 
+    <!-- cell glow for high-activity days -->
+    <filter id="cellGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
     <clipPath id="cardClip">
       <rect width="${W}" height="${H}" rx="20"/>
     </clipPath>
@@ -228,10 +303,10 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
       font-family="'Rajdhani',sans-serif">${escapeXml(name)}'s GitHub Stats</text>
     <text x="68" y="52" fill="${muted}"
       font-size="10" letter-spacing="1.2"
-      font-family="'Rajdhani',sans-serif">NABHOMELAB · ${escapeXml(login.toUpperCase())}</text>
+      font-family="'Rajdhani',sans-serif">KIVOTOS ACADEMY · ${escapeXml(login.toUpperCase())}</text>
 
     <!-- underline accent -->
-    <line x1="70" y1="60" x2="136" y2="60" stroke="${accentBlue}" stroke-width="2" stroke-linecap="round"/>
+    <line x1="68" y1="60" x2="140" y2="60" stroke="${accentBlue}" stroke-width="2" stroke-linecap="round"/>
 
     <!-- SSR badge -->
     <rect x="${W - 80}" y="24" width="62" height="22" rx="11"
@@ -259,17 +334,16 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
     <!-- stat cells -->
     ${statCells}
 
-    <!-- chibi stage bg -->
+    <!-- graph stage bg -->
     <rect x="0" y="242" width="${W}" height="74" fill="url(#stageGrad)"/>
-    <!-- ground line -->
-    <line x1="0" y1="${chibiStageY + chibiH + 4}" x2="${W}" y2="${chibiStageY + chibiH + 4}"
-      stroke="rgba(74,158,255,0.15)" stroke-width="1"/>
 
-    <!-- particles -->
-    ${particles}
+    <!-- contribution graph cells (behind chibi) -->
+    ${graphCells}
 
-    <!-- chibis -->
+    <!-- chibi walks in FRONT of graph cells -->
     ${chibi1}
+    ${chibi2}
+    ${chibi2}
 
     <!-- shimmer -->
     ${shimmer}
@@ -326,8 +400,9 @@ export default async function handler(req, res) {
       followers:          stats.followers,
       topLang:            topLang.name,
       topLangColor:       topLang.color || "#4a9eff",
-      totalContributions: stats.totalContributions,
-      theme:              p.theme,
+      totalContributions:  stats.totalContributions,
+      contributionWeeks:   stats.contributionWeeks,
+      theme:               p.theme,
       avatarBase64,
       ocBase64,
     });
