@@ -203,7 +203,7 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
       font-family="'Rajdhani',sans-serif">Nab HomeLab · ${escapeXml(login.toUpperCase())}</text>>
 
     <!-- underline accent -->
-    <line x1="56" y1="62" x2="120" y2="62" stroke="${accentBlue}" stroke-width="2" stroke-linecap="round"/>
+    <line x1="66" y1="62" x2="136" y2="62" stroke="${accentBlue}" stroke-width="2" stroke-linecap="round"/>
 
     <!-- SSR badge -->
     <rect x="${W - 80}" y="24" width="62" height="22" rx="11"
