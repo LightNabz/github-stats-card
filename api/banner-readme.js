@@ -306,7 +306,7 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
       font-family="'Rajdhani',sans-serif">${escapeXml(name)}'s GitHub Stats</text>
     <text x="68" y="52" fill="${muted}"
       font-size="10" letter-spacing="1.2"
-      font-family="'Rajdhani',sans-serif">KIVOTOS ACADEMY · ${escapeXml(login.toUpperCase())}</text>
+      font-family="'Rajdhani',sans-serif">BISKUITGOSONG · ${escapeXml(login.toUpperCase())}</text>
 
     <!-- underline accent -->
     <line x1="68" y1="60" x2="140" y2="60" stroke="${accentBlue}" stroke-width="2" stroke-linecap="round"/>
