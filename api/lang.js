@@ -1,6 +1,6 @@
-// api/langs.js — Top Languages Card
+// api/langs.js — Top Languages Card (fixed layout)
 import { fetchTopLanguages } from "../lib/github.js";
-import { getTheme, parseParams, cardWrapper, titleText, progressBar, errorCard, escapeXml } from "../lib/theme.js";
+import { getTheme, parseParams, cardWrapper, titleText, errorCard, escapeXml } from "../lib/theme.js";
 
 export default async function handler(req, res) {
   const p = parseParams(req.query);
@@ -16,46 +16,61 @@ export default async function handler(req, res) {
 
     const title = p.custom_title || "Top Languages";
     const width = p.width;
-    const rowH = 28;
-    const padTop = 60;
-    const height = padTop + langs.length * rowH + 20;
 
-    let bars = "";
-    langs.forEach((lang, i) => {
-      const dotColor = lang.color || t.accent;
-      const pct = lang.percent.toFixed(1) + "%";
-      bars += `
-        <circle cx="25" cy="${padTop + i * rowH - 4}" r="5" fill="${escapeXml(dotColor)}" />
-        ${progressBar({
-          x: 38,
-          y: padTop + i * rowH - 12,
-          width: width - 10,
-          percent: lang.percent,
-          theme: t,
-          label: lang.name,
-          value: pct,
-        })}
-      `;
-    });
+    const PADDING_LEFT = 25;
+    const PADDING_RIGHT = 25;
+    const TITLE_H = 52;
+    const ROW_H = 30;
+    const DOT_R = 5;
+    const DOT_COL_W = 16;
+    const PCT_COL_W = 48;
+    const LABEL_COL_W = 110;
+    const BAR_GAP = 10;
 
-    // Compact donut chart in top-right corner
-    const cx = width - 52, cy = 32, r = 20;
+    const barAreaStart = PADDING_LEFT + DOT_COL_W + LABEL_COL_W + BAR_GAP;
+    const barAreaEnd = width - PADDING_RIGHT - PCT_COL_W;
+    const barWidth = barAreaEnd - barAreaStart;
+
+    const height = TITLE_H + langs.length * ROW_H + 22;
+
+    // Donut chart
+    const DONUT_R = 22;
+    const DONUT_CX = width - PADDING_RIGHT - DONUT_R;
+    const DONUT_CY = 30;
+
     let donutSvg = "";
     let startAngle = -Math.PI / 2;
     langs.forEach((lang) => {
       const slice = (lang.percent / 100) * 2 * Math.PI;
       const endAngle = startAngle + slice;
-      const x1 = cx + r * Math.cos(startAngle);
-      const y1 = cy + r * Math.sin(startAngle);
-      const x2 = cx + r * Math.cos(endAngle);
-      const y2 = cy + r * Math.sin(endAngle);
+      const x1 = DONUT_CX + DONUT_R * Math.cos(startAngle);
+      const y1 = DONUT_CY + DONUT_R * Math.sin(startAngle);
+      const x2 = DONUT_CX + DONUT_R * Math.cos(endAngle);
+      const y2 = DONUT_CY + DONUT_R * Math.sin(endAngle);
       const largeArc = slice > Math.PI ? 1 : 0;
       const color = lang.color || t.accent;
-      donutSvg += `<path d="M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${largeArc},1 ${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="${escapeXml(color)}" />`;
+      donutSvg += `<path d="M${DONUT_CX},${DONUT_CY} L${x1.toFixed(2)},${y1.toFixed(2)} A${DONUT_R},${DONUT_R} 0 ${largeArc},1 ${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="${escapeXml(color)}" />`;
       startAngle = endAngle;
     });
-    // Inner circle to make it a donut
-    donutSvg += `<circle cx="${cx}" cy="${cy}" r="${r * 0.55}" fill="${t.bg}" />`;
+    donutSvg += `<circle cx="${DONUT_CX}" cy="${DONUT_CY}" r="${DONUT_R * 0.52}" fill="${t.bg}" />`;
+
+    let rows = "";
+    langs.forEach((lang, i) => {
+      const rowY = TITLE_H + i * ROW_H;
+      const midY = rowY + ROW_H / 2;
+      const dotColor = lang.color || t.accent;
+      const pct = lang.percent ?? 0;
+      const fillW = Math.max(2, (barWidth * pct) / 100);
+      const pctText = pct.toFixed(1) + "%";
+
+      rows += `
+        <circle cx="${PADDING_LEFT + DOT_R}" cy="${midY}" r="${DOT_R}" fill="${escapeXml(dotColor)}" />
+        <text x="${PADDING_LEFT + DOT_COL_W}" y="${midY + 4}" fill="${t.text}" font-size="12" font-weight="500">${escapeXml(lang.name)}</text>
+        <rect x="${barAreaStart}" y="${midY - 3}" width="${barWidth}" height="6" rx="3" fill="${t.bar}" />
+        <rect x="${barAreaStart}" y="${midY - 3}" width="${fillW.toFixed(2)}" height="6" rx="3" fill="${escapeXml(dotColor)}" />
+        <text x="${barAreaEnd + PCT_COL_W - 8}" y="${midY + 4}" fill="${t.muted}" font-size="11" text-anchor="end">${escapeXml(pctText)}</text>
+      `;
+    });
 
     const svg = cardWrapper({
       width,
@@ -66,7 +81,7 @@ export default async function handler(req, res) {
       children: `
         ${p.hide_title ? "" : titleText({ text: title, theme: t })}
         ${donutSvg}
-        ${bars}
+        ${rows}
       `,
     });
 

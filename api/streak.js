@@ -1,4 +1,4 @@
-// api/streak.js — Streak Stats Card
+// api/streak.js — Streak Stats Card (fixed layout)
 import { fetchStreakStats } from "../lib/github.js";
 import { getTheme, parseParams, cardWrapper, titleText, errorCard, escapeXml } from "../lib/theme.js";
 
@@ -19,60 +19,65 @@ export default async function handler(req, res) {
     const s = await fetchStreakStats(p.username);
     const title = p.custom_title || `${p.username}'s Streak`;
     const width = p.width;
-    const height = 175;
+    const height = 170;
 
-    // Three pillars: Total, Current Streak, Longest Streak
     const sections = [
       {
-        top: s.totalContributions.toLocaleString(),
+        value: s.totalContributions.toLocaleString(),
         label: "Total Contributions",
         sub: `${formatDate(s.firstContribution)} – Present`,
+        highlight: false,
       },
       {
-        top: `${s.currentStreak}`,
+        value: String(s.currentStreak),
         label: "Current Streak",
-        sub: s.currentStreak > 0
-          ? `${formatDate(s.lastContribution)} 🔥`
-          : "Start contributing!",
+        sub: s.currentStreak > 0 ? `${formatDate(s.lastContribution)} 🔥` : "Start contributing!",
         highlight: true,
       },
       {
-        top: `${s.longestStreak}`,
+        value: String(s.longestStreak),
         label: "Longest Streak",
-        sub: "days",
+        sub: `Best: ${formatDate(s.lastContribution)}`,
+        highlight: false,
       },
     ];
 
-    const colW = Math.floor((width - 40) / 3);
+    const colW = Math.floor(width / 3);
     let cols = "";
+
     sections.forEach((sec, i) => {
-      const cx = 20 + i * colW + colW / 2;
-      const isHighlight = sec.highlight;
-      const valColor = isHighlight ? t.accent : t.title;
-      // Divider line between sections
+      const cx = i * colW + colW / 2;
+      const valColor = sec.highlight ? t.accent : t.title;
+      const valSize = sec.highlight ? 34 : 28;
+
+      // Dividers
       if (i > 0) {
-        cols += `<line x1="${20 + i * colW}" y1="55" x2="${20 + i * colW}" y2="${height - 30}" stroke="${t.border}" stroke-width="1"/>`;
+        cols += `<line x1="${i * colW}" y1="50" x2="${i * colW}" y2="${height - 25}" stroke="${t.border}" stroke-width="1"/>`;
       }
+
+      // Highlight ring (clean, no muddy fill)
+      if (sec.highlight) {
+        cols += `
+          <circle cx="${cx}" cy="88" r="32" fill="none" stroke="${t.accent}" stroke-width="1.5" opacity="0.35"/>
+          <circle cx="${cx}" cy="88" r="26" fill="${t.accentSoft}" opacity="0.3"/>
+        `;
+      }
+
       cols += `
-        <text x="${cx}" y="90" fill="${valColor}" font-size="${isHighlight ? 32 : 26}" font-weight="700"
-          text-anchor="middle" font-family="'DM Mono', monospace">${escapeXml(sec.top)}</text>
-        <text x="${cx}" y="115" fill="${t.text}" font-size="11" font-weight="500" text-anchor="middle" letter-spacing="0.3">
+        <text x="${cx}" y="${sec.highlight ? 100 : 97}" fill="${valColor}"
+          font-size="${valSize}" font-weight="700" text-anchor="middle"
+          font-family="'DM Mono', monospace">${escapeXml(sec.value)}</text>
+        <text x="${cx}" y="120" fill="${t.muted}" font-size="10" text-anchor="middle" letter-spacing="0.5">
           ${escapeXml(sec.label.toUpperCase())}
         </text>
-        <text x="${cx}" y="133" fill="${t.muted}" font-size="10" text-anchor="middle">
+        <text x="${cx}" y="137" fill="${t.muted}" font-size="10" text-anchor="middle">
           ${escapeXml(sec.sub)}
         </text>
       `;
-      if (isHighlight) {
-        // Subtle glow circle behind big number
-        cols = `<circle cx="${cx}" cy="82" r="30" fill="${t.accentSoft}" opacity="0.5"/>` + cols;
-      }
     });
 
     const svg = cardWrapper({
-      width,
-      height,
-      theme: t,
+      width, height, theme: t,
       border_radius: p.border_radius,
       hide_border: p.hide_border,
       children: `
