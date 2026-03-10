@@ -116,15 +116,17 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
   // ── Contribution graph squares ──
   // Layout: fill full card width, last 26 weeks × 7 days
   const GRAPH_Y     = 242;   // top of graph area
-  const GRAPH_H     = 70;    // total height of graph+chibi zone
-  const GC_CELL      = 7;     // graph cell size
-  const GC_GAP       = 2;     // graph cell gap
-  const GC_COLS      = 26;    // weeks to show
-  const GC_ROWS      = 7;     // days per week
-  const GC_TOTAL_W   = GC_COLS * (GC_CELL + GC_GAP) - GC_GAP;
-  const GC_OFFSET_X  = Math.floor((W - GC_TOTAL_W) / 2);
-  const GC_ROW_H     = GC_ROWS * (GC_CELL + GC_GAP) - GC_GAP;
-  const GC_OFFSET_Y  = GRAPH_Y + Math.floor((GRAPH_H - GC_ROW_H) / 2) - 4;
+  const GRAPH_H     = 72;    // total height of graph+chibi zone
+  const GC_COLS     = 26;    // weeks to show
+  const GC_ROWS     = 7;     // days per week
+  const GC_PAD      = 14;    // left+right padding inside card
+  // derive cell+gap size so graph fills full card width
+  const GC_GAP      = 2;
+  const GC_CELL     = Math.floor((W - GC_PAD * 2 - GC_GAP * (GC_COLS - 1)) / GC_COLS);
+  const GC_TOTAL_W  = GC_COLS * (GC_CELL + GC_GAP) - GC_GAP;
+  const GC_OFFSET_X = GC_PAD;
+  const GC_ROW_H    = GC_ROWS * (GC_CELL + GC_GAP) - GC_GAP;
+  const GC_OFFSET_Y = GRAPH_Y + Math.floor((GRAPH_H - GC_ROW_H) / 2) - 2;
 
   // flatten days, take last 26*7 = 182 days
   const allDays = (contributionWeeks || [])
