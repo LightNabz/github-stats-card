@@ -125,13 +125,13 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
   // cell size: fill full width
   const GC_CELL     = Math.floor((W - GC_PAD * 2 - GC_GAP * (GC_COLS - 1)) / GC_COLS);
   const GC_ROW_H    = GC_ROWS * (GC_CELL + GC_GAP) - GC_GAP;
-  const GC_OFFSET_X = GC_PAD - (GC_CELL + GC_GAP);
+  const GC_OFFSET_X = GC_PAD;
   const GC_OFFSET_Y = GRAPH_Y;
 
   // flatten days, take last 52*7 = 364 days (full year)
   const allDays = (contributionWeeks || [])
     .flatMap(w => w.contributionDays)
-    .slice(-GC_COLS * GC_ROWS);
+    .slice(-(GC_COLS * GC_ROWS) + 7);
   const maxCount = Math.max(...allDays.map(d => d.contributionCount), 1);
 
   let graphCells = "";
