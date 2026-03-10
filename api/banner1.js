@@ -2,7 +2,7 @@
 // Returns an SVG with SMIL animations (works in <img> tags on GitHub README)
 
 import { fetchUserStats, fetchTopLanguages } from "../lib/github.js";
-import { escapeXml, getTheme, parseParams } from "../lib/theme.js";
+import { escapeXml } from "../lib/theme.js";
 
 // ── Chibi placeholder SVG (replace innards with your OC later) ──
 // To swap in your OC:
@@ -15,29 +15,18 @@ function chibiPlaceholder(x, flipX = false) {
   `;
 }
 
-function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang, topLangColor, totalContributions, theme }) {
+function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang, topLangColor, totalContributions }) {
   const W = 520, H = 320;
-  const t = getTheme(theme);
-
-  // BA accent colors stay fixed — they're the banner identity
-  const accentPink   = "#ff6b9d";
-  const accentYellow = "#ffd166";
-
-  // pull from theme token
-  const accentBlue = t.accent;
-  const navy       = t.title;
-  const muted      = t.muted;
-  const softBorder = t.border;
-
-  // background: light themes get the pastel BA gradient, dark themes get deep tinted gradient
-  const isDark = theme && theme.startsWith("dark");
-  const bg1 = isDark ? t.bg                          : "#e8f4ff";
-  const bg2 = isDark ? t.bg                          : "#f5f9ff";
-  const bg3 = isDark ? t.accentSoft                  : "#fffaf5";
-
-  // shimmer color: white on light, accent-tinted on dark
-  const shimmerColor = isDark ? t.accent : "white";
-  const shimmerOp    = isDark ? "0.08"   : "0.5";
+  const accentBlue  = "#4a9eff";
+  const accentPink  = "#ff6b9d";
+  const accentYellow= "#ffd166";
+  const navy        = "#1a3a6e";
+  const muted       = "#8baecf";
+  const bg1         = "#e8f4ff";
+  const bg2         = "#f5f9ff";
+  const bg3         = "#fffaf5";
+  const white       = "#ffffff";
+  const softBorder  = "rgba(74,158,255,0.25)";
 
   // stat cells: 2 rows × 3 cols
   const stats = [
@@ -62,7 +51,7 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
     statCells += `
       <!-- stat cell ${i} -->
       <rect x="${cx}" y="${cy}" width="${CELL_W}" height="${CELL_H}" rx="10"
-        fill="${isDark ? t.accentSoft : 'rgba(255,255,255,0.6)'}" stroke="${softBorder}" stroke-width="1"/>
+        fill="rgba(255,255,255,0.6)" stroke="${softBorder}" stroke-width="1"/>
       <text x="${cx + 12}" y="${cy + 18}" fill="${muted}"
         font-size="9" font-weight="700" letter-spacing="1"
         font-family="'Rajdhani',sans-serif">${escapeXml(s.label)}</text>
@@ -150,10 +139,10 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
 
     <!-- shimmer sweep gradient -->
     <linearGradient id="shimmerGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%"   stop-color="${shimmerColor}" stop-opacity="0"/>
-      <stop offset="45%"  stop-color="${shimmerColor}" stop-opacity="${shimmerOp}"/>
-      <stop offset="55%"  stop-color="${shimmerColor}" stop-opacity="${shimmerOp}"/>
-      <stop offset="100%" stop-color="${shimmerColor}" stop-opacity="0"/>
+      <stop offset="0%"   stop-color="white" stop-opacity="0"/>
+      <stop offset="45%"  stop-color="white" stop-opacity="0.5"/>
+      <stop offset="55%"  stop-color="white" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
       <animateTransform attributeName="gradientTransform" type="translate"
         values="-1.5 0; 1.5 0" dur="4s" repeatCount="indefinite" begin="1s"/>
     </linearGradient>
@@ -167,8 +156,8 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
 
     <!-- chibi stage subtle gradient -->
     <linearGradient id="stageGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="${t.accentSoft}" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="${t.accentSoft}" stop-opacity="0"/>
+      <stop offset="0%"   stop-color="rgba(74,158,255,0.04)"/>
+      <stop offset="100%" stop-color="rgba(74,158,255,0.0)"/>
     </linearGradient>
 
     <clipPath id="cardClip">
@@ -211,10 +200,10 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
       font-family="'Rajdhani',sans-serif">${escapeXml(name)}'s GitHub Stats</text>
     <text x="68" y="52" fill="${muted}"
       font-size="10" letter-spacing="1.2"
-      font-family="'Rajdhani',sans-serif">NABHOMELAB · ${escapeXml(login.toUpperCase())}</text>
+      font-family="'Rajdhani',sans-serif">Nab HomeLab · ${escapeXml(login.toUpperCase())}</text>>
 
     <!-- underline accent -->
-    <line x1="70" y1="60" x2="136" y2="60" stroke="${accentBlue}" stroke-width="2" stroke-linecap="round"/>
+    <line x1="66" y1="62" x2="136" y2="62" stroke="${accentBlue}" stroke-width="2" stroke-linecap="round"/>
 
     <!-- SSR badge -->
     <rect x="${W - 80}" y="24" width="62" height="22" rx="11"
@@ -267,8 +256,7 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
 }
 
 export default async function handler(req, res) {
-  const p = parseParams(req.query);
-  const username = p.username;
+  const username = req.query.username || "octocat";
 
   res.setHeader("Content-Type", "image/svg+xml");
   res.setHeader("Cache-Control", "s-maxage=1800, stale-while-revalidate=86400");
@@ -292,16 +280,14 @@ export default async function handler(req, res) {
       topLang:            topLang.name,
       topLangColor:       topLang.color || "#4a9eff",
       totalContributions: stats.totalContributions,
-      theme:              p.theme,
     });
 
     res.status(200).send(svg);
   } catch (err) {
     // fallback error card
-    const et = getTheme(req.query.theme || "light");
     res.status(200).send(`<svg width="520" height="80" xmlns="http://www.w3.org/2000/svg">
-      <rect width="520" height="80" rx="12" fill="${et.bg}" stroke="${et.border}" stroke-width="1"/>
-      <text x="20" y="46" fill="${et.muted}" font-size="13" font-family="sans-serif">⚠ ${escapeXml(err.message)}</text>
+      <rect width="520" height="80" rx="12" fill="#e8f4ff" stroke="rgba(74,158,255,0.3)" stroke-width="1"/>
+      <text x="20" y="46" fill="#8baecf" font-size="13" font-family="sans-serif">⚠ ${escapeXml(err.message)}</text>
     </svg>`);
   }
 }
