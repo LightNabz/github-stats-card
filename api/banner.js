@@ -228,7 +228,6 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
 
     <!-- chibis -->
     ${chibi1}
-    // ${chibi2}
 
     <!-- shimmer -->
     ${shimmer}
