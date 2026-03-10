@@ -135,7 +135,7 @@ function buildSVG({ name, login, commits, stars, prs, issues, followers, topLang
   let graphCells = "";
   for (let col = 0; col < GC_COLS; col++) {
     for (let row = 0; row < GC_ROWS; row++) {
-      const idx = col * ROWS + row;
+      const idx = col * GC_ROWS + row;
       const day = allDays[idx];
       const count = day ? day.contributionCount : 0;
       const intensity = count / maxCount;
