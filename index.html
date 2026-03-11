@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GitHub Stats Card</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --border: #1e1e2e;
+      --accent: #7c3aed;
+      --accent2: #a855f7;
+      --accent-glow: rgba(124,58,237,0.25);
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --mono: 'Space Mono', monospace;
+      --sans: 'Syne', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* noise overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.6;
+    }
+
+    /* grid bg */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── HEADER ── */
+    header {
+      padding: 60px 0 40px;
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.4);
+      border-radius: 999px;
+      padding: 4px 14px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent2);
+      margin-bottom: 20px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent2);
+      box-shadow: 0 0 8px var(--accent2);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 6vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+    }
+
+    h1 .grad {
+      background: linear-gradient(135deg, #a855f7, #7c3aed, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1rem;
+      font-family: var(--mono);
+      margin-bottom: 0;
+    }
+
+    /* ── MAIN CARD ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin: 32px 0;
+      box-shadow: 0 0 0 1px rgba(124,58,237,0.1), 0 24px 60px rgba(0,0,0,0.5);
+    }
+
+    /* top bar */
+    .card-topbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-r { background: #ff5f56; }
+    .dot-y { background: #ffbd2e; }
+    .dot-g { background: #27c93f; }
+
+    .card-url {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      margin-left: 8px;
+      background: rgba(255,255,255,0.04);
+      padding: 3px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      flex: 1;
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* preview panel */
+    .card-preview {
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      background: repeating-conic-gradient(rgba(255,255,255,0.015) 0% 25%, transparent 0% 50%) 0 0 / 20px 20px;
+      position: relative;
+    }
+
+    #preview-img {
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      transition: all 0.3s ease;
+      display: none;
+    }
+
+    .preview-placeholder {
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .preview-placeholder .icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      filter: grayscale(1);
+    }
+
+    .preview-placeholder p {
+      font-family: var(--mono);
+      font-size: 12px;
+      opacity: 0.5;
+    }
+
+    .preview-loading {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 32px; height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* controls panel */
+    .card-controls {
+      padding: 24px;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .card-controls { grid-template-columns: 1fr; }
+    }
+
+    .field label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .field select,
+    .field input {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+    }
+
+    .field select:focus,
+    .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .field select option {
+      background: #1a1a2e;
+      color: var(--text);
+    }
+
+    /* generate btn */
+    .btn-row {
+      padding: 0 24px 24px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn-generate {
+      flex: 1;
+      padding: 13px 24px;
+      background: linear-gradient(135deg, #7c3aed, #6366f1);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: var(--sans);
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(124,58,237,0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-generate::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .btn-generate:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 28px rgba(124,58,237,0.45); }
+    .btn-generate:hover::after { opacity: 1; }
+    .btn-generate:active { transform: translateY(0); }
+
+    .btn-copy {
+      padding: 13px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-copy:hover { border-color: var(--accent); color: var(--accent2); }
+
+    /* url output */
+    .url-output {
+      margin: 0 24px 24px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent2);
+      word-break: break-all;
+      display: none;
+      line-height: 1.6;
+    }
+
+    /* ── THEMES GRID ── */
+    .section-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      margin-bottom: 16px;
+      padding: 0 2px;
+    }
+
+    .themes-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 500px) { .themes-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .theme-chip {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--surface);
+    }
+
+    .theme-chip:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .theme-chip.active { border-color: var(--accent); background: rgba(124,58,237,0.1); }
+
+    .theme-swatch {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.1);
+      flex-shrink: 0;
+    }
+
+    /* endpoints */
+    .endpoints {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 48px;
+    }
+
+    @media (max-width: 500px) { .endpoints { grid-template-columns: 1fr; } }
+
+    .endpoint-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .endpoint-card:hover { border-color: rgba(124,58,237,0.5); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .endpoint-card.active-card { border-color: var(--accent); background: rgba(124,58,237,0.07); }
+
+    .ep-path {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--accent2);
+      margin-bottom: 4px;
+    }
+
+    .ep-desc {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+      text-align: center;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    footer a { color: var(--accent2); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent2);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      z-index: 1000;
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* animations */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .anim { animation: fadeUp 0.5s ease forwards; opacity: 0; }
+    .anim-1 { animation-delay: 0.1s; }
+    .anim-2 { animation-delay: 0.2s; }
+    .anim-3 { animation-delay: 0.3s; }
+    .anim-4 { animation-delay: 0.4s; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="badge anim anim-1">Made by Nabz <3</div>
+    <h1 class="anim anim-2">GitHub <span class="grad">Stats Cards</span></h1>
+    <p class="subtitle anim anim-3">I have nothing to do that I created this.</p>
+  </header>
+
+  <!-- ENDPOINTS -->
+  <p class="section-label anim anim-3">Select card type</p>
+  <div class="endpoints anim anim-3" id="endpoints">
+    <div class="endpoint-card active-card" data-path="stats" onclick="selectEndpoint(this,'stats')">
+      <div class="ep-path">/api/stats</div>
+      <div class="ep-desc">GitHub Stats — stars, commits, PRs, issues</div>
+    </div>
+    <div class="endpoint-card" data-path="langs" onclick="selectEndpoint(this,'langs')">
+      <div class="ep-path">/api/langs</div>
+      <div class="ep-desc">Top Languages — your most-used languages</div>
+    </div>
+    <div class="endpoint-card" data-path="streak" onclick="selectEndpoint(this,'streak')">
+      <div class="ep-path">/api/streak</div>
+      <div class="ep-desc">Streak Stats — current & longest streaks</div>
+    </div>
+    <div class="endpoint-card" data-path="wakatime" onclick="selectEndpoint(this,'wakatime')">
+      <div class="ep-path">/api/wakatime</div>
+      <div class="ep-desc">WakaTime — coding activity breakdown</div>
+    </div>
+  </div>
+
+  <!-- PREVIEW CARD -->
+  <div class="card anim anim-4">
+    <div class="card-topbar">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+      <div class="card-url" id="url-display">e.g. https://github-stats-card-two.vercel.app/api/stats</div>
+    </div>
+
+    <div class="card-preview" id="preview-area">
+      <div class="preview-placeholder" id="placeholder">
+        <div class="icon">📊</div>
+        <p>fill in your details and hit generate</p>
+      </div>
+      <div class="preview-loading" id="loading">
+        <div class="spinner"></div>
+        <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">fetching card...</span>
+      </div>
+      <img id="preview-img" alt="Card Preview"/>
+    </div>
+
+    <div class="card-controls">
+      <div class="field">
+        <label>Vercel URL</label>
+        <input type="text" id="base-url" placeholder="e.g. https://github-stats-card-two.vercel.app/" />
+      </div>
+      <div class="field">
+        <label>GitHub Username</label>
+        <input type="text" id="username" placeholder="octocat" />
+      </div>
+      <div class="field">
+        <label>Theme</label>
+        <select id="theme-select">
+          <option value="dark">dark</option>
+          <option value="light">light</option>
+          <option value="dark-warm">dark-warm</option>
+          <option value="light-warm">light-warm</option>
+          <option value="dark-green">dark-green</option>
+          <option value="light-green">light-green</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-generate" onclick="generateCard()">Generate Preview</button>
+      <button class="btn-copy" onclick="copyURL()">Copy URL</button>
+    </div>
+
+    <div class="url-output" id="url-output"></div>
+  </div>
+
+  <!-- THEMES -->
+  <p class="section-label">Available themes</p>
+  <div class="themes-grid">
+    <div class="theme-chip" onclick="setTheme('dark')">
+      <div class="theme-swatch" style="background:linear-gradient(135deg,#0d1117,#3b82f6)"></div>
+      dark
+    </div>
+    <div class="theme-chip" onclick="setTheme('light')">
+      <div class="theme-swatch" style="background:linear-gradient(135deg,#fff,#0ea5e9)"></div>
+      light
+    </div>
+    <div class="theme-chip" onclick="setTheme('dark-warm')">
+      <div class="theme-swatch" style="background:linear-gradient(135deg,#1a0f08,#f97316)"></div>
+      dark-warm
+    </div>
+    <div class="theme-chip" onclick="setTheme('light-warm')">
+      <div class="theme-swatch" style="background:linear-gradient(135deg,#fdf4ec,#f97316)"></div>
+      light-warm
+    </div>
+    <div class="theme-chip" onclick="setTheme('dark-green')">
+      <div class="theme-swatch" style="background:linear-gradient(135deg,#0a1a0e,#22c55e)"></div>
+      dark-green
+    </div>
+    <div class="theme-chip" onclick="setTheme('light-green')">
+      <div class="theme-swatch" style="background:linear-gradient(135deg,#f0fdf4,#22c55e)"></div>
+      light-green
+    </div>
+  </div>
+
+  <footer>
+    built on <a href="https://github.com/LightNabz/github-stats-card" target="_blank">github-stats-card</a> by LightNabz &mdash; deploy on <a href="https://vercel.com" target="_blank">Vercel</a>
+  </footer>
+</div>
+
+<div class="toast" id="toast">✓ URL copied to clipboard</div>
+
+<script>
+  let selectedEndpoint = 'stats';
+
+  function selectEndpoint(el, path) {
+    document.querySelectorAll('.endpoint-card').forEach(c => c.classList.remove('active-card'));
+    el.classList.add('active-card');
+    selectedEndpoint = path;
+    updateURLDisplay();
+  }
+
+  function setTheme(t) {
+    document.getElementById('theme-select').value = t;
+    updateURLDisplay();
+  }
+
+  function buildURL() {
+    let base = document.getElementById('base-url').value.trim();
+    const user = document.getElementById('username').value.trim() || 'octocat';
+    const theme = document.getElementById('theme-select').value;
+    if (!base) return null;
+    base = base.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    return `https://${base}/api/${selectedEndpoint}?username=${user}&theme=${theme}`;
+  }
+
+  function updateURLDisplay() {
+    const url = buildURL();
+    const base = document.getElementById('base-url').value.trim() || 'your-deployment.vercel.app';
+    const clean = base.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const user = document.getElementById('username').value.trim() || 'USERNAME';
+    document.getElementById('url-display').textContent = `${clean}/api/${selectedEndpoint}?username=${user}&theme=${document.getElementById('theme-select').value}`;
+  }
+
+  document.getElementById('base-url').addEventListener('input', updateURLDisplay);
+  document.getElementById('username').addEventListener('input', updateURLDisplay);
+  document.getElementById('theme-select').addEventListener('change', updateURLDisplay);
+
+  function generateCard() {
+    const url = buildURL();
+    if (!url) {
+      showToast('⚠ enter your vercel URL first fam');
+      return;
+    }
+
+    const placeholder = document.getElementById('placeholder');
+    const loading = document.getElementById('loading');
+    const img = document.getElementById('preview-img');
+    const urlOutput = document.getElementById('url-output');
+
+    placeholder.style.display = 'none';
+    img.style.display = 'none';
+    loading.style.display = 'flex';
+    urlOutput.style.display = 'none';
+
+    const testImg = new Image();
+    testImg.onload = () => {
+      loading.style.display = 'none';
+      img.src = url;
+      img.style.display = 'block';
+      urlOutput.textContent = url;
+      urlOutput.style.display = 'block';
+    };
+    testImg.onerror = () => {
+      loading.style.display = 'none';
+      placeholder.style.display = 'block';
+      placeholder.innerHTML = '<div class="icon">❌</div><p>couldn\'t load card — check your URL is deployed</p>';
+      urlOutput.textContent = url;
+      urlOutput.style.display = 'block';
+    };
+    testImg.src = url;
+  }
+
+  function copyURL() {
+    const url = buildURL();
+    if (!url) { showToast('⚠ build the URL first'); return; }
+    navigator.clipboard.writeText(url).then(() => showToast('✓ URL copied'));
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // keyboard shortcut
+  document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generateCard();
+  });
+</script>
+</body>
+</html>
