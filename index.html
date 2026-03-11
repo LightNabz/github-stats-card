@@ -229,6 +229,11 @@
       .card-controls { grid-template-columns: 1fr; }
     }
 
+    /* When OC URL field is visible, use 2 columns */
+    .card-controls.show-oc-url {
+      grid-template-columns: 1fr 1fr;
+    }
+
     .field label {
       display: block;
       font-family: var(--mono);
@@ -513,7 +518,7 @@
     <div class="card-controls">
       <div class="field">
         <label>Vercel URL</label>
-        <input type="text" id="base-url" placeholder="https://github-stats-card-two.vercel.app/" />
+        <input type="text" id="base-url" value="https://github-stats-card-two.vercel.app" placeholder="https://github-stats-card-two.vercel.app/" />
       </div>
       <div class="field">
         <label>GitHub Username</label>
@@ -529,6 +534,10 @@
           <option value="dark-green">dark-green</option>
           <option value="light-green">light-green</option>
         </select>
+      </div>
+      <div class="field" id="oc-url-field" style="display: none;">
+        <label>CHAR URL (Optional)</label>
+        <input type="text" id="oc-url" value="https://raw.githubusercontent.com/LightNabz/github-stats-card/main/public/padoru.gif" placeholder="https://example.com/image.gif" />
       </div>
     </div>
 
@@ -583,6 +592,18 @@
     document.querySelectorAll('.endpoint-card').forEach(c => c.classList.remove('active-card'));
     el.classList.add('active-card');
     selectedEndpoint = path;
+    
+    // Show/hide OC URL field for banner-readme endpoint
+    const ocUrlField = document.getElementById('oc-url-field');
+    const cardControls = document.querySelector('.card-controls');
+    if (path === 'banner-readme') {
+      ocUrlField.style.display = 'block';
+      cardControls.classList.add('show-oc-url');
+    } else {
+      ocUrlField.style.display = 'none';
+      cardControls.classList.remove('show-oc-url');
+    }
+    
     updateURLDisplay();
   }
 
@@ -595,9 +616,18 @@
     let base = document.getElementById('base-url').value.trim();
     const user = document.getElementById('username').value.trim() || 'octocat';
     const theme = document.getElementById('theme-select').value;
+    const ocUrl = document.getElementById('oc-url').value.trim();
     if (!base) return null;
     base = base.replace(/^https?:\/\//, '').replace(/\/$/, '');
-    return `https://${base}/api/${selectedEndpoint}?username=${user}&theme=${theme}`;
+    
+    let url = `https://${base}/api/${selectedEndpoint}?username=${user}&theme=${theme}`;
+    
+    // Add oc_url parameter for banner-readme endpoint
+    if (selectedEndpoint === 'banner-readme' && ocUrl) {
+      url += `&oc_url=${encodeURIComponent(ocUrl)}`;
+    }
+    
+    return url;
   }
 
   function updateURLDisplay() {
@@ -605,12 +635,23 @@
     const base = document.getElementById('base-url').value.trim() || 'github-stats-card-two.vercel.app';
     const clean = base.replace(/^https?:\/\//, '').replace(/\/$/, '');
     const user = document.getElementById('username').value.trim() || 'USERNAME';
-    document.getElementById('url-display').textContent = `${clean}/api/${selectedEndpoint}?username=${user}&theme=${document.getElementById('theme-select').value}`;
+    const theme = document.getElementById('theme-select').value;
+    const ocUrl = document.getElementById('oc-url').value.trim();
+    
+    let displayUrl = `${clean}/api/${selectedEndpoint}?username=${user}&theme=${theme}`;
+    
+    // Add oc_url parameter for banner-readme endpoint in display
+    if (selectedEndpoint === 'banner-readme' && ocUrl) {
+      displayUrl += `&oc_url=${encodeURIComponent(ocUrl)}`;
+    }
+    
+    document.getElementById('url-display').textContent = displayUrl;
   }
 
   document.getElementById('base-url').addEventListener('input', updateURLDisplay);
   document.getElementById('username').addEventListener('input', updateURLDisplay);
   document.getElementById('theme-select').addEventListener('change', updateURLDisplay);
+  document.getElementById('oc-url').addEventListener('input', updateURLDisplay);
 
   function generateCard() {
     const url = buildURL();
