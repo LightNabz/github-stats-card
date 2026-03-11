@@ -483,9 +483,9 @@
       <div class="ep-path">/api/streak</div>
       <div class="ep-desc">Streak Stats — current & longest streaks</div>
     </div>
-    <div class="endpoint-card" data-path="wakatime" onclick="selectEndpoint(this,'wakatime')">
-      <div class="ep-path">/api/wakatime</div>
-      <div class="ep-desc">WakaTime — coding activity breakdown</div>
+    <div class="endpoint-card" data-path="special" onclick="selectEndpoint(this,'banner-readme')">
+      <div class="ep-path">/api/banner-readme</div>
+      <div class="ep-desc">Special Card — Made by me OwO</div>
     </div>
   </div>
 
@@ -602,7 +602,7 @@
 
   function updateURLDisplay() {
     const url = buildURL();
-    const base = document.getElementById('base-url').value.trim() || 'your-deployment.vercel.app';
+    const base = document.getElementById('base-url').value.trim() || 'github-stats-card-two.vercel.app';
     const clean = base.replace(/^https?:\/\//, '').replace(/\/$/, '');
     const user = document.getElementById('username').value.trim() || 'USERNAME';
     document.getElementById('url-display').textContent = `${clean}/api/${selectedEndpoint}?username=${user}&theme=${document.getElementById('theme-select').value}`;
